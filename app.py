@@ -55,6 +55,21 @@ def init_db():
     conn.close()
 
 # 注册用户
+
+@app.route('/delete_link/<short_link>', methods=['POST'])
+def delete_link(short_link):
+    if not session.get('logged_in'):
+        return redirect('/login')
+    
+    conn = sqlite3.connect('links.db')
+    c = conn.cursor()
+    c.execute('DELETE FROM links WHERE short_link = ?', (short_link,))
+    conn.commit()
+    conn.close()
+
+    flash('短链接已成功删除')
+    return redirect('/links')
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
