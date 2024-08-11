@@ -24,6 +24,11 @@
                     <td>{{ link[1] }}</td>
                     <td>{{ link[2] }}</td>
                     <td>{{ link[3] }}</td>
+                    td>
+                        <form action="{{ url_for('delete_link', short_link=link[0]) }}" method="POST" style="display:inline;">
+                            <button type="submit" class="btn btn-danger btn-sm">删除</button>
+                        </form>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
