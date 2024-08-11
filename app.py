@@ -290,7 +290,7 @@ def admin():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        if username == 'admin' and password == 'luoshang':
+        if username == 'x' and password == 'x':
             session['admin_logged_in'] = True
             return redirect('/admin/dashboard')
         else:
