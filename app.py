@@ -55,21 +55,6 @@ def init_db():
     conn.close()
 
 # 注册用户
-
-@app.route('/delete_link/<short_link>', methods=['POST'])
-def delete_link(short_link):
-    if not session.get('logged_in'):
-        return redirect('/login')
-    
-    conn = sqlite3.connect('links.db')
-    c = conn.cursor()
-    c.execute('DELETE FROM links WHERE short_link = ?', (short_link,))
-    conn.commit()
-    conn.close()
-
-    flash('短链接已成功删除')
-    return redirect('/links')
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -108,6 +93,21 @@ def redirect_to_original(short_link):
         print("Short link not found")  # 没有找到对应短链接时输出
         flash('短链接不存在或已过期')
         return redirect('/')
+    
+@app.route('/delete_link/<short_link>', methods=['POST'])
+def delete_link(short_link):
+    if not session.get('logged_in'):
+        return redirect('/login')
+    
+    conn = sqlite3.connect('links.db')
+    c = conn.cursor()
+    c.execute('DELETE FROM links WHERE short_link = ?', (short_link,))
+    conn.commit()
+    conn.close()
+
+    flash('短链接已成功删除')
+    return redirect('/links')
+
 # 用户登录
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -178,9 +178,12 @@ def user_logs():
 def create_link():
     if not session.get('logged_in'):
         return redirect('/login')
+    
     original_url = request.form['url']
     expiration_days = int(request.form['expiration'])
+    short_link_length = int(request.form['length'])  # 获取用户选择的短链接长度
     user_id = session['user_id']
+    
     # 从数据库获取用户余额
     conn = sqlite3.connect('links.db')
     c = conn.cursor()
@@ -194,7 +197,7 @@ def create_link():
         flash('余额不足，无法生成短链接')
         return redirect('/')
 
-    short_link = generate_unique_short_link()
+    short_link = generate_unique_short_link(short_link_length)  # 传递用户选择的长度
     created_at = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
     expires_at = (datetime.now() + timedelta(days=expiration_days)).strftime("%Y/%m/%d %H:%M:%S")
     store_link(short_link, original_url, created_at, expires_at, user_id)
@@ -205,13 +208,11 @@ def create_link():
     return redirect('/links')
 
 # 生成唯一短链接
-def generate_unique_short_link():
-    suffix_length = 2
+def generate_unique_short_link(suffix_length):
     while True:
         short_link = ''.join(random.choices(string.ascii_letters + string.digits + "!@#$%^&*()_+=-", k=suffix_length))
         if not is_blacklisted(short_link) and not link_exists(short_link):
             return short_link
-        suffix_length += 1
 
 # 检查是否在黑名单中
 def is_blacklisted(suffix):
