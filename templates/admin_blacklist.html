@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>黑名单管理</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #e8f5e9;
+            padding: 20px;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table th, table td {
+            border: 1px solid #dee2e6;
+            padding: 12px;
+            text-align: center;
+        }
+        table th {
+            background-color: #28a745;
+            color: white;
+        }
+        .btn-primary {
+            background-color: #17a2b8;
+            border-color: #17a2b8;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+        .list-group-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>黑名单管理</h1>
+        <form action="/admin/blacklist" method="post">
+            <div class="form-group">
+                <label for="suffix">添加后缀到黑名单:</label>
+                <input type="text" class="form-control" name="suffix" required>
+            </div>
+            <button type="submit" class="btn btn-primary">添加</button>
+        </form>
+        <hr>
+        <h2>当前黑名单</h2>
+        <ul class="list-group">
+            {% for suffix in blacklist %}
+            <li class="list-group-item">
+                {{ suffix }}
+                <form action="/admin/delete_blacklist/{{ suffix }}" method="post">
+                    <button type="submit" class="btn btn-danger btn-sm">删除</button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+        <a href="/admin/dashboard" class="btn btn-secondary mt-3">返回控制面板</a>
+    </div>
+</body>
+</html>

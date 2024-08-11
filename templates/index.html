@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>生成短链接</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body style="background-color: #e8f5e9;">
+    <div class="container mt-5">
+        <h1>生成短链接</h1>
+        <p>短链接次数余额: {{ balances[0] }}</p>
+        <p>7天链接次数余额: {{ balances[1] }}</p>
+        <p>14天链接次数余额: {{ balances[2] }}</p>
+        <p>30天链接次数余额: {{ balances[3] }}</p>
+        <p>3个月链接次数余额: {{ balances[4] }}</p>
+        <p>1年链接次数余额: {{ balances[5] }}</p>
+        <form action="/create" method="post">
+            <div class="form-group">
+                <label for="url">原始链接:</label>
+                <input type="text" class="form-control" name="url" required>
+            </div>
+            <div class="form-group">
+                <label for="expiration">过期时间:</label>
+                <select class="form-control" name="expiration">
+                    <option value="7">7天</option>
+                    <option value="14">14天</option>
+                    <option value="30" selected>30天</option>
+                    <option value="90">3个月</option>
+                    <option value="365">1年</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">生成短链接</button>
+        </form>
+        <form action="/check_in" method="post" class="mt-3">
+            <button type="submit" class="btn btn-success">签到</button>
+        </form>
+        <hr>
+        <a href="/logout" class="btn btn-secondary">登出</a>
+        <a href="/links" class="btn btn-info">查看我的短链接</a>
+        <a href="/user/logs" class="btn btn-info">查看我的日志</a>
+    </div>
+</body>
+</html>
