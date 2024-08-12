@@ -3,28 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <title>我的短链接</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrap4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #e8f5e9; /* 浅绿色背景 */
+        }
+        h1 {
+            text-align: center;
+            color: #388e3c; /* 深绿色标题 */
+            margin-bottom: 30px;
+        }
+        .table {
+            background-color: white; /* 白色方框 */
+            border-radius: 5px; /* 圆角 */
+            overflow: hidden; /* 避免圆角被遮挡 */
+        }
+        .table th, .table td {
+            vertical-align: middle; /* 垂直居中 */
+        }
+        .btn-secondary {
+            background-color: #6c757d; /* 深灰色按钮 */
+            border: none;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268; /* 深灰色按钮悬停效果 */
+        }
+    </style>
+    <script>
+        function searchTable() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById('linkTable');
+            const tr = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < tr.length; i++) { // 从1开始，跳过表头
+                let found = false;
+                const td = tr[i].getElementsByTagName('td');
+                for (let j = 0; j < td.length - 1; j++) { // -1 跳过删除按钮
+                    if (td[j]) {
+                        const txtValue = td[j].textContent || td[j].innerText;
+                        if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+                tr[i].style.display = found ? "" : "none"; // 显示或隐藏行
+            }
+        }
+    </script>
 </head>
-<body style="background-color: #e8f5e9;">
+<body>
     <div class="container mt-5">
         <h1>我的短链接</h1>
-        <table class="table table-bordered table-hover">
+        <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="搜索..." class="form-control mb-4" />
+        <table class="table table-bordered table-hover" id="linkTable">
             <thead class="thead-light">
                 <tr>
                     <th>短链接</th>
                     <th>原始链接</th>
                     <th>创建时间</th>
                     <th>过期时间</th>
+                    <th>操作</th>
                 </tr>
             </thead>
             <tbody>
                 {% for link in links %}
                 <tr>
-                    <td><a href="{{ link[0] }}">{{ link[0] }}</a></td>
+                    <td><a href="https://url.wangxitan.work/{{ link[0] }}" target="_blank">https://url.wangxitan.work/{{ link[0] }}</a></td>
                     <td>{{ link[1] }}</td>
                     <td>{{ link[2] }}</td>
                     <td>{{ link[3] }}</td>
-                    td>
+                    <td>
                         <form action="{{ url_for('delete_link', short_link=link[0]) }}" method="POST" style="display:inline;">
                             <button type="submit" class="btn btn-danger btn-sm">删除</button>
                         </form>

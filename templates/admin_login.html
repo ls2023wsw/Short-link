@@ -3,11 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <title>管理员登录</title>
-    <link rel="stylesheet" href="https://stackpath.amazonaws.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #e8f5e9;
+            overflow: hidden; /* 防止滚动条出现 */
+            position: relative; /* 使小点相对于 body 定位 */
+        }
+        .login-container {
+            max-width: 400px;
+            margin: auto;
+            padding: 30px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            margin-top: 100px; /* Center vertically */
+            position: relative; /* 使虚线相对于容器定位 */
+            z-index: 1; /* 确保在小点之上 */
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .alert {
+            margin-top: 20px;
+        }
+        /* 小点的样式 */
+        .dot {
+            position: absolute;
+            width: 4px; /* 更小的点 */
+            height: 4px; /* 更小的点 */
+            background-color: rgba(0, 123, 255, 0.7);
+            border-radius: 50%;
+            pointer-events: none; /* 使小点不影响鼠标事件 */
+        }
+        /* 虚线的样式 */
+        .line {
+            position: absolute;
+            border-top: 1px dashed rgba(0, 123, 255, 0.5);
+            pointer-events: none; /* 使虚线不影响鼠标事件 */
+            display: none; /* 默认隐藏 */
+        }
+    </style>
 </head>
-<body style="background-color: #e8f5e9;">
-    <div class="container mt-5">
-        <h1>管理员登录</h1>
+<body>
+    <div class="login-container">
+        <h1 class="login-header">管理员登录</h1>
         <form action="/admin" method="post">
             <div class="form-group">
                 <label for="username">用户名:</label>
@@ -17,15 +58,79 @@
                 <label for="password">密码:</label>
                 <input type="password" class="form-control" name="password" required>
             </div>
-            <button type="submit" class="btn btn-primary">登录</button>
+            <button type="submit" class="btn btn-primary btn-block">登录</button>
         </form>
         {% with messages = get_flashed_messages() %}
           {% if messages %}
-            <div class="alert alert-danger mt-3">
+            <div class="alert alert-danger">
               {{ messages[0] }}
             </div>
           {% endif %}
         {% endwith %}
     </div>
+
+    <script>
+        const body = document.body;
+        const dots = [];
+        const dotCount = 30; // 小点的数量
+        const line = document.createElement('div');
+        line.className = 'line';
+        body.appendChild(line);
+
+        // 创建随机小点并设置随机位置
+        for (let i = 0; i < dotCount; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            dot.style.left = Math.random() * window.innerWidth + 'px';
+            dot.style.top = Math.random() * window.innerHeight + 'px';
+            body.appendChild(dot);
+            dots.push(dot);
+
+            // 使小点随机移动
+            setInterval(() => {
+                dot.style.left = Math.random() * window.innerWidth + 'px';
+                dot.style.top = Math.random() * window.innerHeight + 'px';
+            }, 2000); // 每2秒随机移动一次
+        }
+
+        // 监听鼠标移动事件
+        document.addEventListener('mousemove', (event) => {
+            const mouseX = event.clientX;
+            const mouseY = event.clientY;
+            let closestDot = null;
+            let closestDistance = 60; // 设置最大距离为60像素
+
+            // 检查每个小点与鼠标的距离
+            dots.forEach(dot => {
+                const dotRect = dot.getBoundingClientRect();
+                const dotX = dotRect.left + dotRect.width / 2;
+                const dotY = dotRect.top + dotRect.height / 2;
+                const distance = Math.sqrt((dotX - mouseX) ** 2 + (dotY - mouseY) ** 2);
+
+                // 如果小点在50像素内，计算虚线
+                if (distance < 50) {
+                    closestDot = dot;
+                    closestDistance = distance;
+                }
+            });
+
+            // 如果有小点在50像素内，绘制虚线
+            if (closestDot) {
+                line.style.display = 'block';
+                const dotRect = closestDot.getBoundingClientRect();
+                const dotX = dotRect.left + dotRect.width / 2;
+                const dotY = dotRect.top + dotRect.height / 2;
+
+                // 计算线的起点和终点
+                line.style.left = Math.min(mouseX, dotX) + 'px';
+                line.style.top = Math.min(mouseY, dotY) + 'px';
+                line.style.width = Math.abs(mouseX - dotX) + 'px';
+                line.style.transform = `translateY(${mouseY - dotY}px)`;
+                line.style.opacity = Math.max(0, (50 - closestDistance) / 50); // 根据距离调整透明度
+            } else {
+                line.style.display = 'none'; // 没有小点时隐藏虚线
+            }
+        });
+    </script>
 </body>
 </html>

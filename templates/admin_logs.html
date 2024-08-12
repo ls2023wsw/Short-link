@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>日志管理</title>
-    <link rel="stylesheet" href="https://stackpath.amazonaws.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         body {
             background-color: #e8f5e9;
@@ -28,11 +28,90 @@
             background-color: #28a745;
             color: white;
         }
+        .pagination {
+            justify-content: center;
+        }
     </style>
+    <script>
+        let logs = {{ logs | tojson }}; // 将后端的日志数据传递给前端
+        let displayedLogs = [];
+        let itemsPerPage = 10;
+        let currentPage = 1;
+
+        function updateDisplayCount() {
+            const select = document.getElementById('displayCount');
+            itemsPerPage = parseInt(select.value);
+            currentPage = 1; // 重置到第一页
+            renderLogs();
+        }
+
+        function searchLogs() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            displayedLogs = logs.filter(log => 
+                log[0].toLowerCase().includes(filter) || 
+                log[1].toLowerCase().includes(filter) || 
+                log[2].toLowerCase().includes(filter) || 
+                log[3].toLowerCase().includes(filter)
+            );
+            currentPage = 1; // 重置到第一页
+            renderLogs();
+        }
+
+        function renderLogs() {
+            const tableBody = document.getElementById('logTableBody');
+            tableBody.innerHTML = ''; // 清空表格内容
+
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = Math.min(start + itemsPerPage, displayedLogs.length);
+            for (let i = start; i < end; i++) {
+                const log = displayedLogs[i];
+                const row = `<tr>
+                    <td>${log[0]}</td>
+                    <td>${log[1]}</td>
+                    <td>${log[2]}</td>
+                    <td>${log[3]}</td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            }
+            updatePagination();
+        }
+
+        function updatePagination() {
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = ''; // 清空分页内容
+
+            const totalPages = Math.ceil(displayedLogs.length / itemsPerPage);
+            for (let i = 1; i <= totalPages; i++) {
+                const pageItem = document.createElement('li');
+                pageItem.className = 'page-item' + (i === currentPage ? ' active' : '');
+                pageItem.innerHTML = `<a class="page-link" href="#" onclick="changePage(${i})">${i}</a>`;
+                pagination.appendChild(pageItem);
+            }
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            renderLogs();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            displayedLogs = logs; // 初始显示所有日志
+            renderLogs(); // 渲染日志
+        });
+    </script>
 </head>
 <body>
     <div class="container mt-5">
         <h1>日志管理</h1>
+        <input type="text" id="searchInput" onkeyup="searchLogs()" placeholder="搜索..." class="form-control mb-3" />
+        <label for="displayCount">每页显示:</label>
+        <select id="displayCount" class="form-control mb-3" onchange="updateDisplayCount()">
+            <option value="10">10条</option>
+            <option value="50">50条</option>
+            <option value="100">100条</option>
+            <option value="1000">1000条</option>
+        </select>
         <table class="table table-striped table-hover">
             <thead>
                 <tr>
@@ -42,17 +121,15 @@
                     <th>时间</th>
                 </tr>
             </thead>
-            <tbody>
-                {% for log in logs %}
-                    <tr>
-                        <td>{{ log[0] }}</td>
-                        <td>{{ log[1] }}</td>
-                        <td>{{ log[2] }}</td>
-                        <td>{{ log[3] }}</td>
-                    </tr>
-                {% endfor %}
+            <tbody id="logTableBody">
+                <!-- 日志数据将通过 JavaScript 动态填充 -->
             </tbody>
         </table>
+        <nav>
+            <ul class="pagination" id="pagination">
+                <!-- 分页内容将通过 JavaScript 动态填充 -->
+            </ul>
+        </nav>
         <a href="/admin/dashboard" class="btn btn-secondary mt-3">返回控制面板</a>
     </div>
 </body>

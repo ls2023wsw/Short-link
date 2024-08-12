@@ -15,31 +15,28 @@
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        table th, table td {
-            border: 1px solid #dee2e6;
-            padding: 12px;
-            text-align: center;
-        }
-        table th {
-            background-color: #28a745;
-            color: white;
-        }
-        .btn-primary {
-            background-color: #17a2b8;
-            border-color: #17a2b8;
-        }
-        .btn-danger {
-            background-color: #dc3545;
-            border-color: #dc3545;
-        }
-        .list-group-item {
+        .blacklist-container {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-wrap: wrap;
+            max-height: 400px; /* 设置最大高度 */
+            overflow-y: auto; /* 允许垂直滚动 */
+            border: 1px solid #dee2e6; /* 边框 */
+            border-radius: 5px;
+            padding: 10px;
+        }
+        .blacklist-item {
+            background-color: #f8f9fa; /* 方格背景色 */
+            border: 1px solid #ced4da; /* 方格边框 */
+            border-radius: 5px;
+            padding: 10px;
+            margin: 5px;
+            flex: 0 0 48%; /* 每个方格占48%宽度 */
+            cursor: pointer; /* 鼠标悬停时显示手型 */
+            user-select: none; /* 禁止选中 */
+        }
+        .blacklist-item.selected {
+            background-color: #17a2b8; /* 选中状态的背景色 */
+            color: white; /* 选中状态的字体颜色 */
         }
     </style>
 </head>
@@ -55,17 +52,132 @@
         </form>
         <hr>
         <h2>当前黑名单</h2>
-        <ul class="list-group">
+        <div class="blacklist-container" id="blacklistContainer">
             {% for suffix in blacklist %}
-            <li class="list-group-item">
+            <div class="blacklist-item" data-suffix="{{ suffix }}">
                 {{ suffix }}
-                <form action="/admin/delete_blacklist/{{ suffix }}" method="post">
+                <form action="/admin/delete_blacklist/{{ suffix }}" method="post" class="d-none">
                     <button type="submit" class="btn btn-danger btn-sm">删除</button>
                 </form>
-            </li>
+            </div>
             {% endfor %}
-        </ul>
+        </div>
         <a href="/admin/dashboard" class="btn btn-secondary mt-3">返回控制面板</a>
     </div>
+
+    <script>
+        const blacklistContainer = document.getElementById('blacklistContainer');
+        let selectedItems = new Set();
+        let isDragging = false; // 用于跟踪鼠标拖动状态
+        let lastSelectedItem = null; // 记录最后选中的项
+
+        // 处理方格的点击事件
+        blacklistContainer.addEventListener('click', function(event) {
+            const item = event.target.closest('.blacklist-item');
+            if (item) {
+                // 如果是点击已选中的项，则取消选中
+                if (selectedItems.has(item.getAttribute('data-suffix'))) {
+                    toggleSelection(item);
+                } else {
+                    // 否则，选中当前项
+                    toggleSelection(item);
+                    lastSelectedItem = item; // 更新最后选中的项
+                }
+            }
+        });
+
+        // 处理鼠标按下事件
+        blacklistContainer.addEventListener('mousedown', function(event) {
+            const item = event.target.closest('.blacklist-item');
+            if (item) {
+                isDragging = true; // 开始拖动
+                toggleSelection(item);
+                lastSelectedItem = item; // 更新最后选中的项
+            }
+        });
+
+        // 处理鼠标移动事件
+        blacklistContainer.addEventListener('mousemove', function(event) {
+            if (isDragging) {
+                const item = event.target.closest('.blacklist-item');
+                if (item && item !== lastSelectedItem) {
+                    toggleSelection(item);
+                    lastSelectedItem = item; // 更新最后选中的项
+                }
+            }
+        });
+
+        // 处理鼠标释放事件
+        document.addEventListener('mouseup', function() {
+            isDragging = false; // 结束拖动
+        });
+
+        // 处理右键菜单
+        blacklistContainer.addEventListener('contextmenu', function(event) {
+            event.preventDefault(); // 阻止默认右键菜单
+            const item = event.target.closest('.blacklist-item');
+            if (item) {
+                toggleSelection(item);
+                showContextMenu(event.pageX, event.pageY);
+            }
+        });
+
+        // 显示右键菜单
+        function showContextMenu(x, y) {
+            const contextMenu = document.createElement('div');
+            contextMenu.innerHTML = '删除选中项';
+            contextMenu.style.position = 'absolute';
+            contextMenu.style.left = `${x}px`;
+            contextMenu.style.top = `${y}px`;
+            contextMenu.style.backgroundColor = '#fff';
+            contextMenu.style.border = '1px solid #dee2e6';
+            contextMenu.style.padding = '5px';
+            contextMenu.style.zIndex = 1000;
+
+            // 处理右键菜单点击事件
+            contextMenu.addEventListener('click', function() {
+                deleteSelectedItems();
+                document.body.removeChild(contextMenu);
+            });
+
+            document.body.appendChild(contextMenu);
+
+            // 点击其他地方时关闭菜单
+            document.addEventListener('click', function closeMenu() {
+                document.body.removeChild(contextMenu);
+                document.removeEventListener('click', closeMenu);
+            });
+        }
+
+        // 切换选中状态
+        function toggleSelection(item) {
+            const suffix = item.getAttribute('data-suffix');
+            if (selectedItems.has(suffix)) {
+                selectedItems.delete(suffix);
+                item.classList.remove('selected');
+            } else {
+                selectedItems.add(suffix);
+                item.classList.add('selected');
+            }
+        }
+
+        // 删除选中的方格
+        function deleteSelectedItems() {
+            selectedItems.forEach(suffix => {
+                const item = document.querySelector(`.blacklist-item[data-suffix="${suffix}"]`);
+                if (item) {
+                    const form = item.querySelector('form');
+                    form.submit(); // 提交删除表单
+                }
+            });
+        }
+
+        // 处理键盘删除事件
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Delete') {
+                deleteSelectedItems();
+            }
+        });
+    </script>
 </body>
 </html>

@@ -40,11 +40,31 @@
             background-color: #007bff;
             border-color: #007bff;
         }
+        .pagination {
+            justify-content: center;
+        }
+        .form-control {
+            width: auto;
+            display: inline-block;
+        }
     </style>
 </head>
 <body>
     <div class="container mt-5">
         <h1>用户管理</h1>
+        
+        <!-- 搜索框 -->
+        <input type="text" id="searchInput" onkeyup="searchUsers()" placeholder="搜索用户..." class="form-control mb-3" />
+        
+        <!-- 每页显示数量下拉框 -->
+        <label for="displayCount">每页显示:</label>
+        <select id="displayCount" class="form-control mb-3" onchange="updateDisplayCount()">
+            <option value="10">10条</option>
+            <option value="20">20条</option>
+            <option value="50">50条</option>
+            <option value="100">100条</option>
+        </select>
+
         <h2>申请注册用户</h2>
         <ul class="list-group mb-5">
             {% for user in users %}
@@ -65,7 +85,7 @@
         </ul>
 
         <h2>已注册用户</h2>
-        <table class="table table-striped table-hover">
+        <table class="table table-striped table-hover" id="userTable">
             <thead>
                 <tr>
                     <th>用户名</th>
@@ -78,7 +98,7 @@
                     <th>操作</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="userTableBody">
                 {% for user in users %}
                     {% if user[2] == 'approved' %}
                         <tr>
@@ -91,12 +111,12 @@
                             <td>{{ user[8] }}</td>
                             <td>
                                 <form action="/admin/update_balance/{{ user[0] }}" method="post" class="d-inline">
-                                    <input type="number" name="short_link_balance" placeholder="短链接数量" class="form-control d-inline-block mb-1" style="width: 80px;">
-                                    <input type="number" name="seven_days_balance" placeholder="7天数量" class="form-control d-inline-block mb-1" style="width: 80px;">
-                                    <input type="number" name="fourteen_days_balance" placeholder="14天数量" class="form-control d-inline-block mb-1" style="width: 80px;">
-                                    <input type="number" name="thirty_days_balance" placeholder="30天数量" class="form-control d-inline-block mb-1" style="width: 80px;">
-                                    <input type="number" name="three_months_balance" placeholder="3个月数量" class="form-control d-inline-block mb-1" style="width: 80px;">
-                                    <input type="number" name="one_year_balance" placeholder="1年数量" class="form-control d-inline-block mb-1" style="width: 80px;">
+                                    <input type="number" name="short_link_balance" placeholder="短链接数量" class="form-control d-inline-block mb-1" style="width: 80px;" value="{{ user[3] }}">
+                                    <input type="number" name="seven_days_balance" placeholder="7天数量" class="form-control d-inline-block mb-1" style="width: 80px;" value="{{ user[4] }}">
+                                    <input type="number" name="fourteen_days_balance" placeholder="14天数量" class="form-control d-inline-block mb-1" style="width: 80px;" value="{{ user[5] }}">
+                                    <input type="number" name="thirty_days_balance" placeholder="30天数量" class="form-control d-inline-block mb-1" style="width: 80px;" value="{{ user[6] }}">
+                                    <input type="number" name="three_months_balance" placeholder="3个月数量" class="form-control d-inline-block mb-1" style="width: 80px;" value="{{ user[7] }}">
+                                    <input type="number" name="one_year_balance" placeholder="1年数量" class="form-control d-inline-block mb-1" style="width: 80px;" value="{{ user[8] }}">
                                     <button type="submit" class="btn btn-primary btn-sm">更新</button>
                                 </form>
                                 <form action="/admin/delete_user/{{ user[0] }}" method="post" class="d-inline">
@@ -109,7 +129,96 @@
             </tbody>
         </table>
 
+        <nav>
+            <ul class="pagination" id="pagination">
+                <!-- 分页内容将通过 JavaScript 动态填充 -->
+            </ul>
+        </nav>
+
         <a href="/admin/dashboard" class="btn btn-secondary mt-3">返回控制面板</a>
     </div>
+
+    <script>
+        const allUsers = {{ users | tojson }}; // 将后端的用户数据传递给前端
+        let displayedUsers = [];
+        let itemsPerPage = 10;
+        let currentPage = 1;
+
+        function updateDisplayCount() {
+            const select = document.getElementById('displayCount');
+            itemsPerPage = parseInt(select.value);
+            currentPage = 1; // 重置到第一页
+            renderUsers();
+        }
+
+        function searchUsers() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            displayedUsers = allUsers.filter(user => 
+                user[1].toLowerCase().includes(filter) // 用户名
+            );
+            currentPage = 1; // 重置到第一页
+            renderUsers();
+        }
+
+        function renderUsers() {
+            const tableBody = document.getElementById('userTableBody');
+            const pagination = document.getElementById('pagination');
+            tableBody.innerHTML = ''; // 清空表格内容
+            pagination.innerHTML = ''; // 清空分页内容
+
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = Math.min(start + itemsPerPage, displayedUsers.length);
+            for (let i = start; i < end; i++) {
+                const user = displayedUsers[i];
+                const row = `<tr>
+                    <td>${user[1]}</td>
+                    <td>${user[3]}</td>
+                    <td>${user[4]}</td>
+                    <td>${user[5]}</td>
+                    <td>${user[6]}</td>
+                    <td>${user[7]}</td>
+                    <td>${user[8]}</td>
+                    <td>
+                        <form action="/admin/update_balance/${user[0]}" method="post" class="d-inline">
+                            <input type="number" name="short_link_balance" placeholder="短链接数量" class="form-control d-inline-block mb-1" style="width: 80px;" value="${user[3]}">
+                            <input type="number" name="seven_days_balance" placeholder="7天数量" class="form-control d-inline-block mb-1" style="width: 80px;" value="${user[4]}">
+                            <input type="number" name="fourteen_days_balance" placeholder="14天数量" class="form-control d-inline-block mb-1" style="width: 80px;" value="${user[5]}">
+                            <input type="number" name="thirty_days_balance" placeholder="30天数量" class="form-control d-inline-block mb-1" style="width: 80px;" value="${user[6]}">
+                            <input type="number" name="three_months_balance" placeholder="3个月数量" class="form-control d-inline-block mb-1" style="width: 80px;" value="${user[7]}">
+                            <input type="number" name="one_year_balance" placeholder="1年数量" class="form-control d-inline-block mb-1" style="width: 80px;" value="${user[8]}">
+                            <button type="submit" class="btn btn-primary btn-sm">更新</button>
+                        </form>
+                        <form action="/admin/delete_user/${user[0]}" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-danger btn-sm">删除</button>
+                        </form>
+                    </td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            }
+            updatePagination();
+        }
+
+        function updatePagination() {
+            const pagination = document.getElementById('pagination');
+            const totalPages = Math.ceil(displayedUsers.length / itemsPerPage);
+            for (let i = 1; i <= totalPages; i++) {
+                const pageItem = document.createElement('li');
+                pageItem.className = 'page-item' + (i === currentPage ? ' active' : '');
+                pageItem.innerHTML = `<a class="page-link" href="#" onclick="changePage(${i})">${i}</a>`;
+                pagination.appendChild(pageItem);
+            }
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            renderUsers();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            displayedUsers = allUsers; // 初始显示所有用户
+            renderUsers(); // 渲染用户
+        });
+    </script>
 </body>
 </html>
